@@ -1,6 +1,7 @@
 const DEFAULT_HOST = "https://api.brightdata.com";
 export const PROFILE_DATASET_ID = "gd_l1viktl72bvl7bjuj0";
 export const POSTS_DATASET_ID = "gd_lyy3tktm25m4avu764";
+export const DEFAULT_RECENT_POST_LIMIT = 3;
 const DEFAULT_DATASET_ID = PROFILE_DATASET_ID;
 const DEFAULT_TIMEOUT_MS = 70_000;
 
@@ -154,7 +155,70 @@ export function createBrightDataClient(overrides: Partial<BrightDataConfig> = {}
     return profile as LinkedInProfile;
   }
 
-  return { config, scrapeLinkedInProfile, scrapeLinkedIn };
+  async function discoverRecentPosts(
+    profileUrl: string,
+    limit = DEFAULT_RECENT_POST_LIMIT,
+  ): Promise<LinkedInProfile[]> {
+    if (!config.apiKey) {
+      throw new BrightDataError("Bright Data is not configured. Set BRIGHTDATA_API_KEY.", "not_configured");
+    }
+
+    const endpoint = new URL("/datasets/v3/scrape", config.host);
+    endpoint.searchParams.set("dataset_id", POSTS_DATASET_ID);
+    endpoint.searchParams.set("format", "json");
+    endpoint.searchParams.set("include_errors", "true");
+    endpoint.searchParams.set("type", "discover_new");
+    endpoint.searchParams.set("discover_by", "profile_url");
+
+    let response: Response;
+    try {
+      response = await doFetch(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          input: [{ url: profileUrl }],
+          limit_per_input: limit,
+        }),
+        signal: AbortSignal.timeout(config.timeoutMs),
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === "TimeoutError") {
+        throw new BrightDataError(`Bright Data did not answer within ${config.timeoutMs} ms`, "timeout");
+      }
+      throw new BrightDataError("Cannot reach Bright Data.", "unreachable");
+    }
+
+    const responseText = await response.text().catch(() => "");
+    const data = parseJson(responseText);
+    if (response.status === 202) {
+      const snapshotId = (data as { snapshot_id?: unknown } | null)?.snapshot_id;
+      throw new BrightDataError(
+        "Bright Data is still discovering recent posts. Try again in a moment.",
+        "pending",
+        202,
+        typeof snapshotId === "string" ? snapshotId : undefined,
+      );
+    }
+    if (!response.ok) {
+      throw new BrightDataError(
+        `Bright Data returned ${response.status}: ${extractErrorDetails(data, responseText)}`,
+        "http",
+        response.status,
+      );
+    }
+
+    if (!Array.isArray(data)) {
+      throw new BrightDataError("Bright Data returned no recent posts.", "http", 502);
+    }
+    return data
+      .filter((post): post is LinkedInProfile => Boolean(post && typeof post === "object" && !Array.isArray(post)))
+      .slice(0, limit);
+  }
+
+  return { config, scrapeLinkedInProfile, scrapeLinkedIn, discoverRecentPosts };
 }
 
 function parseJson(text: string): unknown {

@@ -76,6 +76,7 @@ h1 em::after { background: #c8f135; bottom: 5px; content: ''; height: 18px; left
 .project-list li:first-child { border-top: 0; padding-top: 0; }
 .project-list li span { background: #c8f135; border-radius: 50%; flex: 0 0 9px; height: 9px; margin-top: 6px; }
 .result-note { color: #53695e; font-family: Georgia, serif; font-size: 16px; line-height: 1.5; margin: 0; }
+.usage-note { color: #819689; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .04em; text-align: right; text-transform: uppercase; }
 .skeleton { animation: pulse 1.5s ease-in-out infinite; background: #e3e7d9; }
 .skeleton-tall { min-height: 440px; }
 .skeleton-stack { display: flex; flex-direction: column; gap: 22px; }

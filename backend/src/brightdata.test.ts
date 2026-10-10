@@ -67,6 +67,35 @@ describe("Bright Data client", () => {
     expect(request?.url).toContain("dataset_id=gd_lyy3tktm25m4avu764");
   });
 
+  test("discovers three recent posts for a profile", async () => {
+    let request: Request | undefined;
+    const client = createBrightDataClient({
+      apiKey: "secret",
+      host: "https://brightdata.test",
+      fetch: (async (input, init) => {
+        request = new Request(input, init);
+        return Response.json([
+          { post_text: "one" },
+          { post_text: "two" },
+          { post_text: "three" },
+          { post_text: "four" },
+        ]);
+      }) as typeof fetch,
+    });
+
+    await expect(client.discoverRecentPosts("https://www.linkedin.com/in/jane-doe")).resolves.toEqual([
+      { post_text: "one" },
+      { post_text: "two" },
+      { post_text: "three" },
+    ]);
+    expect(request?.url).toContain("type=discover_new");
+    expect(request?.url).toContain("discover_by=profile_url");
+    expect(await request?.json()).toEqual({
+      input: [{ url: "https://www.linkedin.com/in/jane-doe" }],
+      limit_per_input: 3,
+    });
+  });
+
   test("exposes a pending snapshot instead of losing the job", async () => {
     const client = createBrightDataClient({
       apiKey: "secret",

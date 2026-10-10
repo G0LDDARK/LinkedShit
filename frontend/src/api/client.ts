@@ -13,8 +13,13 @@ export type CandidateAnalysis = {
     realSkills: string[];
     concreteProjects: string[];
     summary: string;
+    usage: {
+      promptTokens?: number;
+      completionTokens?: number;
+      totalTokens?: number;
+    };
   };
-};
+}
 
 type ErrorResponse = {
   error?: string;

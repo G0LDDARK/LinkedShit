@@ -63,11 +63,30 @@ A company/showcase posts feed such as
 `/showcase/example/posts/?feedView=all` is not one specific post. Paste the URL
 of an individual post from that feed instead.
 
+For a profile URL, the service uses three recent posts as a low-cost signal of
+the candidate's actual activity. For a direct `/posts/...` or `/pulse/...` URL,
+only that supplied post is analyzed because Bright Data cannot safely infer the
+author profile from every post URL.
+
+### Performance notes
+
+The first request can take time because Bright Data performs a live scrape and
+the local Ollama model may need to load. The backend keeps the model warm for
+30 minutes, disables unnecessary reasoning for this extraction task, limits
+the response to a compact JSON shape, and caches completed analyses in memory
+for five minutes. A repeated request for the same URL is therefore immediate.
+
+`BRIGHTDATA_TIMEOUT_MS` controls the maximum synchronous scrape wait. Bright
+Data can legitimately take close to one minute; for a production UI, the next
+step would be an asynchronous trigger/polling flow so the browser does not
+hold the request open.
+
 The backend then:
 
 1. Scrapes the profile through Bright Data.
-2. Sends the structured profile to the local Ollama model.
-3. Returns a typed candidate analysis.
+2. Discovers the **3 most recent posts** for profile URLs through Bright Data.
+3. Sends the compact profile plus those posts to the local Ollama model.
+4. Returns a typed candidate analysis.
 
 Configure the providers with environment variables (keep these in a local
 `.env`, never in the frontend):
@@ -78,6 +97,10 @@ BRIGHTDATA_API_KEY=your_api_key
 BRIGHTDATA_DATASET_ID=gd_l1viktl72bvl7bjuj0
 OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=llama3.2
+OLLAMA_KEEP_ALIVE=30m
+OLLAMA_NUM_PREDICT=220
+OLLAMA_TEMPERATURE=0
+OLLAMA_THINK=false
 ```
 
 Bright Data may return HTTP `202` with a `snapshotId` when a scrape takes more

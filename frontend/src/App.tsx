@@ -144,6 +144,12 @@ export default function App() {
                 <div className="result-heading"><Target size={20} /><div><span className="card-kicker">Pas du blabla</span><h3>Réalisations concrètes</h3></div></div>
                 <ul className="project-list">{result.concreteProjects.map((project) => <li key={project}><span />{project}</li>)}</ul>
               </div>
+              <div className="usage-note">
+                Ollama : {result.usage.totalTokens ?? '—'} tokens au total
+                {result.usage.promptTokens !== undefined && result.usage.completionTokens !== undefined
+                  ? ` (${result.usage.promptTokens} entrée · ${result.usage.completionTokens} sortie)`
+                  : ''}
+              </div>
             </div>
           </section>
         )}
