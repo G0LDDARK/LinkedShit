@@ -1,6 +1,58 @@
 import { useState } from 'react';
-import { Search, Loader2, Sparkles, AlertCircle, ExternalLink, ShieldCheck, Target } from 'lucide-react';
+import {
+  Search, Loader2, Sparkles, AlertCircle, ExternalLink,
+  ShieldCheck, Target, ScanSearch, Filter, BadgeCheck,
+} from 'lucide-react';
 import type { CandidateAnalysis } from './types';
+
+function ScoreRing({ value, size = 112 }: { value: number; size?: number }) {
+  const v = Math.max(0, Math.min(100, value));
+  const r = 28;
+  const circ = 2 * Math.PI * r;
+  const tone = v >= 70 ? 'text-emerald-500' : v >= 40 ? 'text-amber-500' : 'text-rose-500';
+
+  return (
+    <div
+      className="relative shrink-0"
+      style={{ width: size, height: size }}
+      role="img"
+      aria-label={`Fiabilité du profil : ${v} pour cent`}
+    >
+      <svg viewBox="0 0 72 72" className="h-full w-full -rotate-90">
+        <circle cx="36" cy="36" r={r} fill="none" strokeWidth="6" className="stroke-slate-900/10" />
+        <circle
+          cx="36" cy="36" r={r} fill="none" strokeWidth="6" strokeLinecap="round"
+          className={`ring-progress stroke-current ${tone}`}
+          strokeDasharray={circ}
+          strokeDashoffset={circ * (1 - v / 100)}
+          style={{ ['--ring-circ' as string]: circ }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-2xl font-extrabold leading-none text-slate-900">{v}%</span>
+        <span className="mt-1 text-[9px] font-bold uppercase tracking-widest text-slate-500">Fiabilité</span>
+      </div>
+    </div>
+  );
+}
+
+function Skeleton() {
+  return (
+    <div className="grid gap-6 lg:grid-cols-[340px_1fr]" aria-hidden>
+      <div className="glass-strong h-72 animate-pulse rounded-[28px]" />
+      <div className="flex flex-col gap-6">
+        <div className="glass-strong h-36 animate-pulse rounded-[28px]" />
+        <div className="glass-strong h-44 animate-pulse rounded-[28px]" />
+      </div>
+    </div>
+  );
+}
+
+const FEATURES = [
+  { icon: ScanSearch, title: 'Scan du profil', text: 'Posts, expériences et recommandations analysés.' },
+  { icon: Filter, title: 'Filtre anti-bruit', text: 'Le jargon corporate et les buzzwords sont ignorés.' },
+  { icon: BadgeCheck, title: 'Faits vérifiables', text: 'Seuls les skills et réalisations concrets remontent.' },
+];
 
 export default function App() {
   const [url, setUrl] = useState('');
@@ -11,7 +63,7 @@ export default function App() {
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.includes('linkedin.com/in/')) {
-      setError("Veuillez entrer une URL de profil LinkedIn valide.");
+      setError('Veuillez entrer une URL de profil LinkedIn valide.');
       return;
     }
 
@@ -20,164 +72,188 @@ export default function App() {
     setResult(null);
 
     try {
-      // MOCK POUR LE FRONT (Simulation de l'attente scraping + IA)
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       const mockData: CandidateAnalysis = {
         linkedinUrl: url,
-        candidateName: "Jean Dupont",
+        candidateName: 'Jean Dupont',
         bullshitScore: 85,
-        realSkills: ["React", "TypeScript", "Architecture Microservices", "Node.js"],
+        realSkills: ['React', 'TypeScript', 'Architecture Microservices', 'Node.js'],
         concreteProjects: [
-          "A migré la base de données de V1 à V2 sans downtime",
-          "Gère une équipe de 3 développeurs",
-          "Mise en place d'une pipeline CI/CD automatisée"
+          'A migré la base de données de V1 à V2 sans downtime',
+          'Gère une équipe de 3 développeurs',
+          "Mise en place d'une pipeline CI/CD automatisée",
         ],
-        summary: "Candidat technique solide. Les posts montrent une vraie maîtrise de TypeScript et de l'architecture logicielle, malgré quelques publications 'corporate' ignorées par le filtre."
+        summary:
+          "Candidat technique solide. Les posts montrent une vraie maîtrise de TypeScript et de l'architecture logicielle, malgré quelques publications 'corporate' ignorées par le filtre.",
       };
-      
+
       setResult(mockData);
-    } catch (err) {
-      setError("Erreur lors de l'analyse du profil. Le serveur est peut-être injoignable.");
+    } catch {
+      setError("Erreur lors de l'analyse du profil. Le serveur est injoignable.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    // Fond global avec de la profondeur
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-blue-200 relative overflow-hidden flex flex-col justify-center">
-      
-      {/* Formes colorées en arrière-plan pour révéler le glassmorphism */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-indigo-300/40 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-teal-300/40 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-[40%] left-[60%] w-[30rem] h-[30rem] bg-blue-300/30 rounded-full blur-[100px] pointer-events-none" />
+    <div className="relative min-h-screen w-full overflow-hidden selection:bg-indigo-200">
+      {/* Aurora */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <div className="aurora-blob -left-32 -top-40 h-[520px] w-[520px] bg-indigo-300/50" />
+        <div className="aurora-blob -right-40 top-1/4 h-[460px] w-[460px] bg-sky-200/70" style={{ animationDelay: '-6s' }} />
+        <div className="aurora-blob -bottom-40 left-1/4 h-[520px] w-[520px] bg-fuchsia-200/60" style={{ animationDelay: '-12s' }} />
+      </div>
 
-      {/* Conteneur principal (au-dessus du fond) */}
-      <div className="max-w-4xl mx-auto px-6 py-12 lg:py-20 relative z-10 w-full">
-        
-        {/* Header en mode "Bulle de verre" */}
-        <header className="mb-12 text-center space-y-5">
-          <div className="inline-flex items-center justify-center gap-2 bg-white/40 backdrop-blur-md px-6 py-3 rounded-full border border-white/60 shadow-sm">
-            <Sparkles className="text-indigo-500 w-5 h-5" />
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">
-              Linked<span className="text-indigo-600">Shit</span>
-            </h1>
+      <main className="relative z-10 mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 py-14">
+        {/* Hero */}
+        <header className="space-y-4 text-center">
+          <div className="glass inline-flex items-center gap-2 rounded-full px-5 py-2">
+            <Sparkles className="h-4 w-4 text-indigo-500" aria-hidden />
+            <span className="text-xs font-semibold uppercase tracking-widest text-slate-600">
+              Analyse de profils sans filtre corporate
+            </span>
           </div>
-          <p className="text-slate-600 text-lg max-w-2xl mx-auto font-medium">
-            Filtrez le bruit. Extrayez les vraies compétences.
+          <h1 className="text-5xl font-extrabold tracking-tight text-slate-900">
+            Linked
+            <span className="bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">Shit</span>
+          </h1>
+          <p className="mx-auto max-w-xl text-base font-medium text-slate-500">
+            Filtrez le bruit. Extrayez les compétences.
           </p>
         </header>
 
-        {/* Search Bar Glassmorphe */}
-        <form onSubmit={handleAnalyze} className="mb-16 relative max-w-2xl mx-auto group">
-          <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none z-10">
-            <Search className="h-5 w-5 text-slate-500 group-focus-within:text-indigo-600 transition-colors" />
-          </div>
+        {/* Recherche */}
+        <form
+          onSubmit={handleAnalyze}
+          className="group relative mx-auto w-full max-w-2xl"
+          aria-busy={isLoading}
+        >
+          <label htmlFor="profile-url" className="sr-only">URL du profil LinkedIn</label>
+          <Search
+            className="pointer-events-none absolute left-5 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-600"
+            aria-hidden
+          />
           <input
+            id="profile-url"
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://www.linkedin.com/in/candidat/"
-            className="w-full pl-14 pr-36 py-4 bg-white/40 backdrop-blur-lg border border-white/60 rounded-2xl text-slate-800 placeholder-slate-500 focus:outline-none focus:bg-white/60 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all shadow-[0_8px_32px_rgba(0,0,0,0.04)]"
+            placeholder="https://www.linkedin.com/in/…"
             required
+            className="glass w-full rounded-2xl py-4 pl-13 pr-40 text-base text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:bg-white/85 focus:ring-4 focus:ring-indigo-400/25"
+            style={{ paddingLeft: '3.25rem' }}
           />
           <button
             type="submit"
             disabled={isLoading}
-            className="absolute inset-y-2 right-2 bg-indigo-600 text-white px-6 rounded-xl font-semibold hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-600/30 transition-all flex items-center gap-2 disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none disabled:cursor-not-allowed z-10"
+            className="btn-primary absolute inset-y-2 right-2 flex items-center gap-2 rounded-xl px-6 text-sm font-semibold text-white"
           >
-            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
-            {isLoading ? 'Analyse...' : 'Scanner'}
+            {isLoading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+            {isLoading ? 'Scan…' : 'Analyser'}
           </button>
         </form>
 
-        {/* Error State */}
+        {/* Erreur */}
         {error && (
-          <div className="max-w-2xl mx-auto bg-red-100/50 backdrop-blur-md border border-red-200/60 text-red-700 p-4 rounded-2xl mb-8 flex items-start gap-3 shadow-sm">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <p className="font-medium">{error}</p>
+          <div
+            role="alert"
+            className="fade-up glass mx-auto flex w-full max-w-2xl items-start gap-3 rounded-2xl border-rose-200/80 bg-rose-50/60 p-4 text-rose-600"
+          >
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+            <p className="text-sm font-medium">{error}</p>
           </div>
         )}
 
-        {/* Results Dashboard - La carte en verre principale */}
+        {/* Etat vide */}
+        {!result && !isLoading && !error && (
+          <section className="fade-up grid gap-4 md:grid-cols-3">
+            {FEATURES.map(({ icon: Icon, title, text }) => (
+              <div key={title} className="glass glass-hover rounded-[24px] p-6">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500/15 to-violet-500/15 text-indigo-600">
+                  <Icon className="h-5 w-5" aria-hidden />
+                </div>
+                <h3 className="mb-1 text-sm font-bold text-slate-800">{title}</h3>
+                <p className="text-sm leading-relaxed text-slate-500">{text}</p>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {/* Chargement */}
+        {isLoading && <Skeleton />}
+
+        {/* Résultats */}
         {result && (
-          <div className="bg-white/50 backdrop-blur-xl border border-white/80 rounded-[2rem] p-8 md:p-10 shadow-[0_8px_32px_rgba(31,38,135,0.05)] animate-in fade-in slide-in-from-bottom-8 duration-700">
-            
-            {/* Header Resultat */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-8 mb-8 gap-6 border-b border-slate-200/50">
-              <div>
-                <h2 className="text-3xl font-black text-slate-900 mb-2">{result.candidateName || "Candidat Anonyme"}</h2>
-                <a 
-                  href={result.linkedinUrl} 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 hover:underline text-sm font-semibold transition-colors"
+          <section className="fade-up grid items-start gap-6 lg:grid-cols-[340px_1fr]">
+            {/* Colonne gauche : identité + score + résumé */}
+            <aside className="glass-strong flex flex-col items-center gap-5 rounded-[28px] p-6 text-center lg:sticky lg:top-8">
+              <ScoreRing value={result.bullshitScore} />
+              <div className="min-w-0 space-y-1">
+                <h2 className="truncate text-2xl font-bold text-slate-900">
+                  {result.candidateName || 'Anonyme'}
+                </h2>
+                <a
+                  href={result.linkedinUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-500 transition-colors hover:text-indigo-700"
                 >
-                  Voir le profil original <ExternalLink className="w-4 h-4" />
+                  Ouvrir le profil <ExternalLink className="h-3 w-3" aria-hidden />
                 </a>
               </div>
-              
-              {/* Score Box Glass */}
-              <div className="bg-white/60 backdrop-blur-md border border-white/60 px-6 py-4 rounded-2xl text-center min-w-[140px] shadow-sm">
-                <div className="text-4xl font-black text-indigo-600 mb-1">{result.bullshitScore}%</div>
-                <div className="text-[11px] text-slate-500 uppercase tracking-widest font-bold">Bullshit Filtré</div>
-              </div>
-            </div>
 
-            {/* Résumé IA */}
-            <div className="mb-12">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                Résumé Factuel 
-                <span className="bg-indigo-100/80 text-indigo-700 text-[10px] px-2.5 py-1 rounded-md border border-indigo-200/50">Généré par IA</span>
-              </h3>
-              <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-2xl p-6 text-slate-700 leading-relaxed text-lg border-l-4 border-l-indigo-500 shadow-sm">
-                "{result.summary}"
+              <div className="w-full text-left">
+                <div className="mb-2.5 flex items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Résumé IA</span>
+                  <span className="h-px flex-1 bg-gradient-to-r from-slate-300/60 to-transparent" />
+                </div>
+                <p className="glass-subtle rounded-2xl border-l-2 !border-l-indigo-400 p-4 text-sm leading-relaxed text-slate-700">
+                  {result.summary}
+                </p>
               </div>
-            </div>
+            </aside>
 
-            {/* Grille Compétences / Projets */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Compétences Box Glass */}
-              <div className="bg-white/30 backdrop-blur-md rounded-3xl p-7 border border-white/60 shadow-sm hover:bg-white/40 transition-colors">
-                <h3 className="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-emerald-500" />
-                  Compétences Détectées
+            {/* Colonne droite : skills + réalisations */}
+            <div className="flex flex-col gap-6">
+              <div className="glass-strong glass-hover rounded-[28px] p-6">
+                <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-slate-800">
+                  <ShieldCheck className="h-5 w-5 text-emerald-500" aria-hidden />
+                  Hard Skills confirmés
                 </h3>
-                <div className="flex flex-wrap gap-2.5">
-                  {result.realSkills.map((skill, idx) => (
-                    <span 
-                      key={idx} 
-                      className="px-4 py-2 bg-white/70 backdrop-blur-sm text-slate-700 border border-white/80 rounded-xl text-sm font-semibold shadow-sm hover:border-emerald-300 hover:text-emerald-700 transition-colors"
+                <ul className="flex flex-wrap gap-2.5">
+                  {result.realSkills.map((skill) => (
+                    <li
+                      key={skill}
+                      className="glass-subtle glass-hover rounded-full px-4 py-1.5 text-sm font-semibold text-slate-700 hover:!border-emerald-300 hover:bg-white/80"
                     >
                       {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Projets Box Glass */}
-              <div className="bg-white/30 backdrop-blur-md rounded-3xl p-7 border border-white/60 shadow-sm hover:bg-white/40 transition-colors">
-                <h3 className="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
-                  <Target className="w-5 h-5 text-indigo-500" />
-                  Faits Concrets & Projets
-                </h3>
-                <ul className="space-y-4">
-                  {result.concreteProjects.map((project, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-slate-700 font-medium">
-                      <span className="w-2 h-2 bg-indigo-500 rounded-full mt-2.5 shrink-0 shadow-sm"></span>
-                      <span className="leading-relaxed">{project}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
+              <div className="glass-strong glass-hover rounded-[28px] p-6">
+                <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-slate-800">
+                  <Target className="h-5 w-5 text-indigo-500" aria-hidden />
+                  Réalisations concrètes
+                </h3>
+                <ul className="space-y-3">
+                  {result.concreteProjects.map((project) => (
+                    <li
+                      key={project}
+                      className="glass-subtle flex items-start gap-3 rounded-2xl p-4 text-sm text-slate-600"
+                    >
+                      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500" />
+                      <span className="leading-snug">{project}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-          </div>
+          </section>
         )}
-
-      </div>
+      </main>
     </div>
   );
 }
