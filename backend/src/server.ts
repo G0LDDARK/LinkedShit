@@ -1,3 +1,4 @@
+import { OllamaError, parsePromptRequest, sendPrompt } from "./ollama";
 import { createShortResume, parseResumeRequest } from "./resume";
 
 const port = Number(Bun.env.PORT ?? 3000);
@@ -23,6 +24,32 @@ function optionsResponse(): Response {
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     },
   });
+}
+
+async function handlePrompt(request: Request): Promise<Response> {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "Request body must be valid JSON" }, 400);
+  }
+
+  let prompt: string;
+  try {
+    ({ prompt } = parsePromptRequest(body));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Invalid request";
+    return json({ error: message }, 400);
+  }
+
+  try {
+    return json({ response: await sendPrompt(prompt) });
+  } catch (error) {
+    if (error instanceof OllamaError) {
+      return json({ error: error.message }, error.kind === "timeout" ? 504 : 502);
+    }
+    return json({ error: "Unexpected error" }, 500);
+  }
 }
 
 const server = Bun.serve({
@@ -51,6 +78,10 @@ const server = Bun.serve({
           }
         })
         .catch(() => json({ error: "Request body must be valid JSON" }, 400));
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/prompt") {
+      return handlePrompt(request);
     }
 
     return json({ error: "Not found" }, 404);
