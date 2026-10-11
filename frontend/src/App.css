@@ -4,7 +4,7 @@
 .topbar { align-items: center; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(18,60,45,.25); padding-bottom: 19px; }
 .wordmark { color: #073b29; font-size: 30px; font-weight: 700; letter-spacing: -2.2px; text-decoration: none; }
 .wordmark span { position: relative; z-index: 0; }
-.wordmark span::before { content: ''; position: absolute; background: #c8f135; height: 13px; inset: 14px -4px 0 -4px; transform: rotate(-2deg); z-index: -1; }
+.wordmark span::before { content: ''; position: absolute; background: #c8f135; height: 13px; inset: 14px -4px 0 1px; transform: rotate(-2deg); z-index: -1; }
 .nav-note, .nav-link, .form-foot, footer, .card-kicker { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
 .nav-note { color: #61766b; }
 .account-actions { align-items: center; display: flex; gap: 14px; }
