@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
-  AlertCircle, ArrowUpRight, BadgeCheck, Check, Filter, Loader2, Search,
-  ScanSearch, ShieldCheck, Sparkles, Target,
+  AlertCircle, ArrowUpRight, BadgeCheck, Check, Clock3, Filter, History,
+  Loader2, Search, ScanSearch, ShieldCheck, Sparkles, Target,
 } from 'lucide-react';
 import { analyzeLinkedInProfile, ApiError, type CandidateAnalysis } from './api/client';
 import './App.css';
@@ -24,7 +24,15 @@ const FEATURES = [
   { icon: BadgeCheck, number: '03', title: 'On garde le solide', text: 'Compétences, preuves et réalisations concrètes. Rien de plus.' },
 ];
 
+const HISTORY = [
+  { name: 'Julien Berson', role: 'Étudiant en informatique', date: 'Aujourd’hui · 00:42', score: '78%' },
+  { name: 'Sarah Chen', role: 'Product designer · Paris', date: 'Hier · 18:16', score: '91%' },
+  { name: 'Marc-Antoine Roy', role: 'Software engineer · Lyon', date: '09 oct. · 14:03', score: '84%' },
+  { name: 'Nina Morel', role: 'Growth & opérations', date: '07 oct. · 09:27', score: '69%' },
+];
+
 export default function App() {
+  const [activePage, setActivePage] = useState<'home' | 'history'>('home');
   const [linkedinUrl, setLinkedinUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,18 +62,22 @@ export default function App() {
   return (
     <div className="app-shell">
       <div className="paper-noise" aria-hidden />
-      <div className="fly fly-one" aria-hidden>
-        <span className="fly-wing fly-wing-left" />
-        <span className="fly-body" />
-        <span className="fly-wing fly-wing-right" />
-      </div>
-      <div className="fly fly-two" aria-hidden>
-        <span className="fly-wing fly-wing-left" />
-        <span className="fly-body" />
-        <span className="fly-wing fly-wing-right" />
-      </div>
-      <div className="dotted-path dotted-path-one" aria-hidden />
-      <div className="dotted-path dotted-path-two" aria-hidden />
+      {activePage === 'home' && (
+        <>
+          <div className="fly fly-one" aria-hidden>
+            <span className="fly-wing fly-wing-left" />
+            <span className="fly-body" />
+            <span className="fly-wing fly-wing-right" />
+          </div>
+          <div className="fly fly-two" aria-hidden>
+            <span className="fly-wing fly-wing-left" />
+            <span className="fly-body" />
+            <span className="fly-wing fly-wing-right" />
+          </div>
+          <div className="dotted-path dotted-path-one" aria-hidden />
+          <div className="dotted-path dotted-path-two" aria-hidden />
+        </>
+      )}
 
       <main className="page">
         <nav className="topbar">
@@ -73,9 +85,41 @@ export default function App() {
             Linked<span>Sheet</span>
           </a>
           <div className="nav-note"><span className="status-dot" /> version anti-bullshit / 01</div>
-          <a className="nav-link" href="#how-it-works">Comment ça marche <ArrowUpRight size={15} /></a>
+          <div className="account-actions">
+            <button className="history-button" type="button" onClick={() => setActivePage(activePage === 'history' ? 'home' : 'history')}>
+              <History size={15} /> Historique
+            </button>
+            <button className="user-chip" type="button" onClick={() => setActivePage('home')} aria-label="Revenir à l’accueil">
+              <span className="avatar">CM</span>
+              <span className="user-name">Camille Martin</span>
+            </button>
+          </div>
         </nav>
 
+        {activePage === 'history' ? (
+          <section className="history-page result-animation">
+            <div className="history-heading">
+              <div>
+                <p className="eyebrow"><Clock3 size={15} /> Votre espace</p>
+                <h1>Les profils<br /><em>déjà nettoyés</em><span className="lime-dot">.</span></h1>
+                <p className="hero-subtitle">Retrouvez vos dernières analyses et reprenez votre veille là où vous l’avez laissée.</p>
+              </div>
+              <button className="back-button" type="button" onClick={() => setActivePage('home')}><ArrowUpRight size={16} /> Nouvelle analyse</button>
+            </div>
+            <div className="history-list">
+              {HISTORY.map((entry) => (
+                <button className="history-entry" type="button" key={entry.name} onClick={() => setActivePage('home')}>
+                  <span className="history-avatar">{entry.name.split(' ').map((part) => part[0]).join('')}</span>
+                  <span className="history-person"><strong>{entry.name}</strong><small>{entry.role}</small></span>
+                  <span className="history-date">{entry.date}</span>
+                  <span className="history-score">{entry.score}</span>
+                  <ArrowUpRight size={17} />
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : (
+          <>
         <section className="hero">
           <div className="hero-copy">
             <p className="eyebrow"><Sparkles size={15} /> L’outil des recruteurs qui ont autre chose à faire</p>
@@ -110,7 +154,7 @@ export default function App() {
               {isLoading ? 'On gratte…' : 'Analyser'}
             </button>
           </div>
-          <div className="form-foot"><span>Pas de compte. Pas de tracking.</span><span>Un résultat en environ une minute.</span></div>
+          <div className="form-foot"><span>Historique sauvegardé automatiquement.</span><span>Un résultat en environ une minute.</span></div>
         </form>
 
         {error && (
@@ -161,6 +205,8 @@ export default function App() {
               </div>
             </div>
           </section>
+        )}
+          </>
         )}
 
         <footer><span>LinkedSheet © 2026</span><span>Lisez le candidat, pas le bruit.</span><span>Fait avec moins de jargon.</span></footer>
