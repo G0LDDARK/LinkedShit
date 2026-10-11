@@ -30,6 +30,10 @@ describe("loadOllamaConfig", () => {
       model: DEFAULT_OLLAMA_MODEL,
       systemPrompt: DEFAULT_SYSTEM_PROMPT,
       timeoutMs: 120_000,
+      keepAlive: "30m",
+      numPredict: 220,
+      temperature: 0,
+      think: true,
     });
   });
 
@@ -45,6 +49,10 @@ describe("loadOllamaConfig", () => {
       model: "mistral",
       systemPrompt: "Be brief.",
       timeoutMs: 5000,
+      keepAlive: "30m",
+      numPredict: 220,
+      temperature: 0,
+      think: true,
     });
   });
 
@@ -86,6 +94,10 @@ describe("sendPrompt", () => {
     expect(JSON.parse(calls[0]!.init.body as string)).toEqual({
       model: "m1",
       stream: false,
+      format: "json",
+      keep_alive: "30m",
+      think: false,
+      options: { num_predict: 220, temperature: 0 },
       messages: [
         { role: "system", content: DEFAULT_SYSTEM_PROMPT },
         { role: "user", content: "Summarize this profile" },
@@ -97,7 +109,9 @@ describe("sendPrompt", () => {
     const { impl } = fakeFetch(() => okResponse("  Senior engineer at ACME.\n"));
     const client = createOllamaClient({ fetch: impl });
 
-    expect(await client.sendPrompt("hi")).toBe("Senior engineer at ACME.");
+    expect(await client.sendPrompt("hi")).toMatchObject({
+      content: "Senior engineer at ACME.",
+    });
   });
 
   test("lets a call override the system prompt and the model", async () => {
@@ -184,7 +198,7 @@ describe("sendPrompt over real HTTP (mock Ollama server)", () => {
   test("round-trips a prompt through a real HTTP call", async () => {
     const client = createOllamaClient({ host: `http://localhost:${mock.port}`, model: "mock" });
 
-    expect(await client.sendPrompt("hello")).toBe("mock answer");
+    expect(await client.sendPrompt("hello")).toMatchObject({ content: "mock answer" });
     expect(lastBody.messages.map((m: { role: string }) => m.role)).toEqual(["system", "user"]);
     expect(lastBody.messages[1].content).toBe("hello");
   });

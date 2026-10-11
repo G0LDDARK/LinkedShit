@@ -3,6 +3,8 @@ const MAX_PROMPT_LENGTH = 30_000;
 export const DEFAULT_OLLAMA_HOST = "http://localhost:11434";
 export const DEFAULT_OLLAMA_MODEL = "llama3.2";
 export const DEFAULT_TIMEOUT_MS = 120_000;
+export const DEFAULT_KEEP_ALIVE = "30m";
+export const DEFAULT_NUM_PREDICT = 220;
 
 export const DEFAULT_SYSTEM_PROMPT = `You help recruiters cut through corporate bullshit on LinkedIn.
 You receive the raw text of a candidate's LinkedIn profile.
@@ -16,12 +18,27 @@ export type OllamaConfig = {
   model: string;
   systemPrompt: string;
   timeoutMs: number;
+  keepAlive: string;
+  numPredict: number;
+  temperature: number;
+  think: boolean;
   fetch?: typeof fetch;
 };
 
 export type SendPromptOptions = {
   systemPrompt?: string;
   model?: string;
+};
+
+export type OllamaUsage = {
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+};
+
+export type OllamaResponse = {
+  content: string;
+  usage: OllamaUsage;
 };
 
 export type PromptRequest = {
@@ -45,12 +62,18 @@ export function loadOllamaConfig(
   env: Record<string, string | undefined> = Bun.env,
 ): OllamaConfig {
   const timeoutMs = Number(env.OLLAMA_TIMEOUT_MS);
+  const numPredict = Number(env.OLLAMA_NUM_PREDICT);
+  const temperature = Number(env.OLLAMA_TEMPERATURE);
 
   return {
     host: env.OLLAMA_HOST || DEFAULT_OLLAMA_HOST,
     model: env.OLLAMA_MODEL || DEFAULT_OLLAMA_MODEL,
     systemPrompt: env.OLLAMA_SYSTEM_PROMPT || DEFAULT_SYSTEM_PROMPT,
     timeoutMs: Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : DEFAULT_TIMEOUT_MS,
+    keepAlive: env.OLLAMA_KEEP_ALIVE || DEFAULT_KEEP_ALIVE,
+    numPredict: Number.isFinite(numPredict) && numPredict > 0 ? numPredict : DEFAULT_NUM_PREDICT,
+    temperature: Number.isFinite(temperature) && temperature >= 0 ? temperature : 0,
+    think: env.OLLAMA_THINK !== "false",
   };
 }
 
@@ -82,7 +105,7 @@ export function createOllamaClient(overrides: Partial<OllamaConfig> = {}) {
    * Envoie `prompt` à Ollama (précédé du prompt système par défaut)
    * et renvoie le texte de la réponse.
    */
-  async function sendPrompt(prompt: string, options: SendPromptOptions = {}): Promise<string> {
+  async function sendPrompt(prompt: string, options: SendPromptOptions = {}): Promise<OllamaResponse> {
     const userPrompt = validatePrompt(prompt);
     const doFetch = config.fetch ?? fetch;
 
@@ -94,6 +117,13 @@ export function createOllamaClient(overrides: Partial<OllamaConfig> = {}) {
         body: JSON.stringify({
           model: options.model ?? config.model,
           stream: false,
+          format: "json",
+          keep_alive: config.keepAlive,
+          think: config.think,
+          options: {
+            num_predict: config.numPredict,
+            temperature: config.temperature,
+          },
           messages: [
             { role: "system", content: options.systemPrompt ?? config.systemPrompt },
             { role: "user", content: userPrompt },
@@ -117,12 +147,33 @@ export function createOllamaClient(overrides: Partial<OllamaConfig> = {}) {
     }
 
     const data: unknown = await response.json().catch(() => null);
-    const content = (data as { message?: { content?: unknown } } | null)?.message?.content;
+    const responseData = data as {
+      message?: { content?: unknown };
+      prompt_eval_count?: unknown;
+      eval_count?: unknown;
+    } | null;
+    const content = responseData?.message?.content;
     if (typeof content !== "string") {
       throw new OllamaError("Ollama returned an unexpected response format", "invalid_response");
     }
 
-    return content.trim();
+    const promptTokens = typeof responseData?.prompt_eval_count === "number"
+      ? responseData.prompt_eval_count
+      : undefined;
+    const completionTokens = typeof responseData?.eval_count === "number"
+      ? responseData.eval_count
+      : undefined;
+
+    return {
+      content: content.trim(),
+      usage: {
+        promptTokens,
+        completionTokens,
+        totalTokens: promptTokens !== undefined && completionTokens !== undefined
+          ? promptTokens + completionTokens
+          : undefined,
+      },
+    };
   }
 
   return { config, sendPrompt };
