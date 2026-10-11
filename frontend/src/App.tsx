@@ -110,7 +110,7 @@ export default function App() {
               {isLoading ? 'On gratte…' : 'Analyser'}
             </button>
           </div>
-          <div className="form-foot"><span>Pas de compte. Pas de tracking.</span><span>Un résultat en 30 secondes.</span></div>
+          <div className="form-foot"><span>Pas de compte. Pas de tracking.</span><span>Un résultat en environ une minute.</span></div>
         </form>
 
         {error && (
