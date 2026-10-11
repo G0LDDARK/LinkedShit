@@ -63,10 +63,16 @@ A company/showcase posts feed such as
 `/showcase/example/posts/?feedView=all` is not one specific post. Paste the URL
 of an individual post from that feed instead.
 
-For a profile URL, the service uses three recent posts as a low-cost signal of
-the candidate's actual activity. For a direct `/posts/...` or `/pulse/...` URL,
+For a profile URL, the service uses up to three recent **original** posts as a
+low-cost signal of the candidate's actual activity. Reposts/reshares marked by
+Bright Data are removed before analysis. If no original posts are returned, the
+profile alone is analyzed. For a direct `/posts/...` or `/pulse/...` URL,
 only that supplied post is analyzed because Bright Data cannot safely infer the
 author profile from every post URL.
+
+The Ollama prompt also requires every result to be directly supported by the
+profile or original posts. Unsupported skills, jobs, achievements, dates, and
+intentions must be omitted rather than guessed.
 
 ### Performance notes
 
@@ -84,7 +90,7 @@ hold the request open.
 The backend then:
 
 1. Scrapes the profile through Bright Data.
-2. Discovers the **3 most recent posts** for profile URLs through Bright Data.
+2. Discovers the **3 most recent original posts** for profile URLs through Bright Data.
 3. Sends the compact profile plus those posts to the local Ollama model.
 4. Returns a typed candidate analysis.
 

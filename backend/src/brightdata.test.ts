@@ -5,6 +5,7 @@ import {
   loadBrightDataConfig,
   parseLinkedInUrl,
   parseLinkedInTarget,
+  selectRecentOriginalPosts,
 } from "./brightdata";
 
 describe("Bright Data client", () => {
@@ -94,6 +95,20 @@ describe("Bright Data client", () => {
       input: [{ url: "https://www.linkedin.com/in/jane-doe" }],
       limit_per_input: 3,
     });
+  });
+
+  test("excludes reposts and keeps the three newest original posts", () => {
+    expect(selectRecentOriginalPosts([
+      { date_posted: "2025-01-01", post_text: "old" },
+      { date_posted: "2025-01-04", post_text: "repost", is_repost: true },
+      { date_posted: "2025-01-03", post_text: "newest original" },
+      { date_posted: "2025-01-02", post_text: "middle original" },
+      { date_posted: "2025-01-05", post_text: "reshare", post_type: "repost" },
+    ], 3)).toEqual([
+      { date_posted: "2025-01-03", post_text: "newest original" },
+      { date_posted: "2025-01-02", post_text: "middle original" },
+      { date_posted: "2025-01-01", post_text: "old" },
+    ]);
   });
 
   test("exposes a pending snapshot instead of losing the job", async () => {

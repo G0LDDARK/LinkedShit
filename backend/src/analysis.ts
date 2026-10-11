@@ -19,7 +19,7 @@ export type CandidateAnalysis = {
   usage: OllamaUsage;
 };
 
-const ANALYSIS_PROMPT = `Analyze this structured LinkedIn profile data.
+const ANALYSIS_PROMPT = `Analyze only the supplied structured LinkedIn profile data and original posts.
 Return ONLY valid JSON with exactly these keys:
 {
   "candidateName": "string or empty",
@@ -29,7 +29,11 @@ Return ONLY valid JSON with exactly these keys:
   "summary": "a factual summary in 20 words or fewer"
 }
 The bullshitScore is the percentage of useful, concrete signal (0-100), not a judgment of the person.
-Ignore buzzwords and unsupported claims. Never invent data. Use the language of the profile.
+Ignore buzzwords and unsupported claims. Never invent data. Every name, skill, project and summary claim
+must be directly supported by the profile or an original post. Do not infer education, employment,
+seniority, technologies, achievements, dates or intentions. If the data does not support a fact, omit it.
+If recentPosts is empty, use only the profile. Reposts are excluded and must not be treated as evidence.
+Use the language of the profile. A low-information profile must produce empty arrays and a cautious summary.
 
 Profile data:
 `;
