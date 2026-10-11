@@ -54,14 +54,23 @@ export default function App() {
   return (
     <div className="app-shell">
       <div className="paper-noise" aria-hidden />
-      <div className="fly fly-one" aria-hidden>✦</div>
-      <div className="fly fly-two" aria-hidden>✦</div>
-      <div className="dotted-path" aria-hidden />
+      <div className="fly fly-one" aria-hidden>
+        <span className="fly-wing fly-wing-left" />
+        <span className="fly-body" />
+        <span className="fly-wing fly-wing-right" />
+      </div>
+      <div className="fly fly-two" aria-hidden>
+        <span className="fly-wing fly-wing-left" />
+        <span className="fly-body" />
+        <span className="fly-wing fly-wing-right" />
+      </div>
+      <div className="dotted-path dotted-path-one" aria-hidden />
+      <div className="dotted-path dotted-path-two" aria-hidden />
 
       <main className="page">
         <nav className="topbar">
-          <a className="wordmark" href="/" aria-label="LinkedShit, accueil">
-            Linked<span>Shit</span>
+          <a className="wordmark" href="/" aria-label="LinkedSheet, accueil">
+            Linked<span>Sheet</span>
           </a>
           <div className="nav-note"><span className="status-dot" /> version anti-bullshit / 01</div>
           <a className="nav-link" href="#how-it-works">Comment ça marche <ArrowUpRight size={15} /></a>
@@ -154,7 +163,7 @@ export default function App() {
           </section>
         )}
 
-        <footer><span>LinkedShit © 2026</span><span>Lisez le candidat, pas le bruit.</span><span>Fait avec moins de jargon.</span></footer>
+        <footer><span>LinkedSheet © 2026</span><span>Lisez le candidat, pas le bruit.</span><span>Fait avec moins de jargon.</span></footer>
       </main>
     </div>
   );
