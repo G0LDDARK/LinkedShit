@@ -25,10 +25,10 @@ const FEATURES = [
 ];
 
 const HISTORY = [
-  { name: 'Julien Berson', role: 'Étudiant en informatique', date: 'Aujourd’hui · 00:42', score: '78%' },
-  { name: 'Sarah Chen', role: 'Product designer · Paris', date: 'Hier · 18:16', score: '91%' },
-  { name: 'Marc-Antoine Roy', role: 'Software engineer · Lyon', date: '09 oct. · 14:03', score: '84%' },
-  { name: 'Nina Morel', role: 'Growth & opérations', date: '07 oct. · 09:27', score: '69%' },
+  { name: 'Julien Berson', role: 'Étudiant en informatique', date: 'Aujourd’hui · 00:42' },
+  { name: 'Sarah Chen', role: 'Product designer · Paris', date: 'Hier · 18:16' },
+  { name: 'Marc-Antoine Roy', role: 'Software engineer · Lyon', date: '09 oct. · 14:03' },
+  { name: 'Nina Morel', role: 'Growth & opérations', date: '07 oct. · 09:27' },
 ];
 
 export default function App() {
@@ -112,7 +112,6 @@ export default function App() {
                   <span className="history-avatar">{entry.name.split(' ').map((part) => part[0]).join('')}</span>
                   <span className="history-person"><strong>{entry.name}</strong><small>{entry.role}</small></span>
                   <span className="history-date">{entry.date}</span>
-                  <span className="history-score">{entry.score}</span>
                   <ArrowUpRight size={17} />
                 </button>
               ))}
