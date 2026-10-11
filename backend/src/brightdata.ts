@@ -21,6 +21,39 @@ export type LinkedInTarget = {
   kind: LinkedInTargetKind;
 };
 
+function isRepost(record: LinkedInProfile): boolean {
+  const repostFlags = [
+    "is_repost", "is_reshare", "is_reshared", "reposted", "reshared",
+  ];
+  if (repostFlags.some((field) => record[field] === true)) return true;
+
+  const type = record.post_type ?? record.content_type ?? record.activity_type;
+  if (typeof type === "string" && /repost|reshare|shared/i.test(type)) return true;
+
+  return false;
+}
+
+function postTimestamp(record: LinkedInProfile): number {
+  for (const field of ["date_posted", "posted_at", "date", "timestamp"]) {
+    const value = record[field];
+    const timestamp = typeof value === "string" || typeof value === "number"
+      ? Date.parse(String(value))
+      : Number.NaN;
+    if (Number.isFinite(timestamp)) return timestamp;
+  }
+  return 0;
+}
+
+export function selectRecentOriginalPosts(
+  posts: LinkedInProfile[],
+  limit = DEFAULT_RECENT_POST_LIMIT,
+): LinkedInProfile[] {
+  return posts
+    .filter((post) => !isRepost(post))
+    .sort((left, right) => postTimestamp(right) - postTimestamp(left))
+    .slice(0, limit);
+}
+
 export class BrightDataError extends Error {
   constructor(
     message: string,
@@ -213,9 +246,10 @@ export function createBrightDataClient(overrides: Partial<BrightDataConfig> = {}
     if (!Array.isArray(data)) {
       throw new BrightDataError("Bright Data returned no recent posts.", "http", 502);
     }
-    return data
-      .filter((post): post is LinkedInProfile => Boolean(post && typeof post === "object" && !Array.isArray(post)))
-      .slice(0, limit);
+    const posts = data.filter(
+      (post): post is LinkedInProfile => Boolean(post && typeof post === "object" && !Array.isArray(post)),
+    );
+    return selectRecentOriginalPosts(posts, limit);
   }
 
   return { config, scrapeLinkedInProfile, scrapeLinkedIn, discoverRecentPosts };
